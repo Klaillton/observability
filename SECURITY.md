@@ -1,4 +1,4 @@
-# 🔒 Política de Segurança — Observability EPO
+# 🔒 Política de Segurança
 
 ## 📋 Versões Suportadas
 
@@ -16,7 +16,7 @@ Se você encontrou uma vulnerabilidade de segurança neste repositório, **não 
 
 ### Como reportar
 
-1. Envie um e-mail para o time de segurança da EPO
+1. Abra uma [Security Advisory](https://github.com/Klaillton/observability/security/advisories/new) no repositório
 2. Descreva detalhadamente a vulnerabilidade encontrada
 3. Inclua passos para reproduzir o problema
 4. Aguarde a confirmação em até **72 horas**
@@ -31,9 +31,8 @@ Se você encontrou uma vulnerabilidade de segurança neste repositório, **não 
 - ✅ Utilize o arquivo `.env.example` como referência, nunca o `.env` real
 
 ### Acesso ao Repositório
-- Acesso concedido somente a membros autorizados da EPO
-- Revisão de acessos realizada periodicamente
-- Autenticação de dois fatores (2FA) obrigatória para todos os colaboradores
+- Autenticação de dois fatores (2FA) recomendada para todos os colaboradores
+- Revisão periódica de acessos e tokens pessoais
 
 ### Código
 - Todo código deve passar por **Code Review** antes do merge
@@ -48,7 +47,7 @@ Se você encontrou uma vulnerabilidade de segurança neste repositório, **não 
 
 ## 🔄 Atualizações de Segurança
 
-As atualizações de segurança serão aplicadas com prioridade máxima e comunicadas ao time via canais internos da EPO.
+As atualizações de segurança serão aplicadas com prioridade máxima.
 
 ---
 
