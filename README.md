@@ -1,12 +1,12 @@
-# 📊 Observability EPO
+# 📊 Observability
 
-Repositório de observabilidade da EPO, centralizado para monitoramento, rastreamento e logging dos serviços.
+Repositório centralizado de observabilidade para configuração, gerenciamento e monitorização de projetos locais — voltado para estudo, treinamento e demais necessidades que surjam ao longo do tempo.
 
 ---
 
 ## 🚀 Visão Geral
 
-Este repositório contém as configurações e ferramentas de observabilidade utilizadas nos serviços da EPO, incluindo:
+Este repositório contém as configurações e ferramentas de observabilidade para projetos locais, incluindo:
 
 - **Métricas** — Coleta e visualização de métricas dos serviços
 - **Logs** — Centralização e análise de logs
@@ -28,11 +28,11 @@ Este repositório contém as configurações e ferramentas de observabilidade ut
 ## 📁 Estrutura do Projeto
 
 ```
-observability-epo/
-├── dashboards/        # Dashboards do Grafana
-├── alerts/            # Regras de alertas
-├── configs/           # Configurações gerais
-├── docs/              # Documentação
+observability/
+├── config/            # Configurações do collector, Prometheus e Tempo
+├── grafana-storage/   # Dados persistentes do Grafana
+├── tempo-data/        # Dados persistentes do Tempo
+├── docker-compose.yml
 ├── README.md
 └── SECURITY.md
 ```
@@ -44,7 +44,6 @@ observability-epo/
 ### Pré-requisitos
 
 - Docker e Docker Compose instalados
-- Acesso ao ambiente da EPO
 
 ### Executando localmente
 
@@ -65,7 +64,7 @@ docker-compose up -d
 
 | Branch | Descrição |
 |--------|-----------|
-| `main` | Branch principal — código estável e em produção |
+| `main` | Branch principal — configurações estáveis |
 | `develop` | Branch de desenvolvimento |
 | `feature/*` | Branches de novas funcionalidades |
 | `hotfix/*` | Branches de correções urgentes |
@@ -83,4 +82,4 @@ docker-compose up -d
 
 ## 📬 Contato
 
-Dúvidas ou sugestões, entre em contato com o time da EPO.
+Dúvidas ou sugestões, abra uma [issue](https://github.com/Klaillton/observability/issues) no repositório.
