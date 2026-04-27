@@ -1,0 +1,53 @@
+# ============================================================================
+# Ingress para acesso local
+# ============================================================================
+# Este exemplo assume Traefik com entrypoint "web".
+# Hosts locais usados:
+# - grafana.local
+# - prometheus.local
+#
+# Dica: adicione no /etc/hosts apontando para o IP do cluster/ingress.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: observability
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    # Exposicao da UI do Grafana.
+    - host: grafana.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus
+  namespace: observability
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    # Exposicao da UI/API do Prometheus.
+    - host: prometheus.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus
+                port:
+                  number: 9090

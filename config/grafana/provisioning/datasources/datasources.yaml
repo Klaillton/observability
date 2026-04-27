@@ -1,6 +1,13 @@
+# ============================================================================
+# Grafana Datasources - Provisioning
+# ============================================================================
+# Provisioning permite que o Grafana suba ja configurado,
+# sem ajuste manual na UI a cada ambiente.
+
 apiVersion: 1
 
 datasources:
+  # Fonte de metrics (PromQL).
   - name: Prometheus
     type: prometheus
     access: proxy
@@ -8,6 +15,7 @@ datasources:
     isDefault: false
     editable: true
 
+  # Fonte de traces (exploracao de spans e grafos de servicos).
   - name: Tempo
     type: tempo
     access: proxy
@@ -15,15 +23,21 @@ datasources:
     isDefault: false
     editable: true
     jsonData:
+      # Habilita correlacao trace -> logs.
+      # Janela de tempo evita perder logs proximos ao span.
       tracesToLogsV2:
         datasourceUid: loki
         spanStartTimeShift: "-1m"
         spanEndTimeShift: "1m"
+      # Usa Prometheus para mapa de servicos.
       serviceMap:
         datasourceUid: prometheus
+      # Visualizacao de dependencias entre spans.
       nodeGraph:
         enabled: true
 
+  # Fonte de logs (LogQL).
+  # Definida como default para facilitar exploracao inicial no Explore.
   - name: Loki
     type: loki
     uid: loki
@@ -32,6 +46,7 @@ datasources:
     isDefault: true
     editable: true
     jsonData:
+      # Campo derivado para extrair traceId do log e criar link para Tempo.
       derivedFields:
         - datasourceUid: tempo
           matcherRegex: '"traceId":"(\w+)"'

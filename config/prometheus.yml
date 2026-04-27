@@ -1,15 +1,30 @@
+# ============================================================================
+# Prometheus - Configuracao
+# ============================================================================
+# Prometheus opera em modelo pull:
+# ele faz scrape periodico dos alvos configurados abaixo.
+
 global:
+  # Intervalo padrao de coleta para todos os jobs.
+  # 15s e um equilibrio comum entre granularidade e custo.
   scrape_interval: 15s
 
 scrape_configs:
+  # Autocoleta do proprio Prometheus para monitorar sua saude.
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
+  # Coleta metrics que o OTel Collector expoe na porta 8889.
+  # Essas metrics normalmente representam dados recebidos das aplicacoes.
   - job_name: 'otel-collector-metrics'
     static_configs:
       - targets: ['otel-collector:8889']
 
+  # Exemplo de alvo de aplicacao Spring Boot.
+  # Mantido para referencia de instrumentacao de aplicacao real.
+  # Em Kubernetes, esse alvo foi removido no pacote k8s para evitar erro
+  # quando o servico nao existe no cluster.
   - job_name: 'brewer'
     metrics_path: '/actuator/prometheus'
     static_configs:

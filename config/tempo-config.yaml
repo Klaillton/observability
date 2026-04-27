@@ -1,20 +1,33 @@
+# ============================================================================
+# Tempo - Configuracao
+# ============================================================================
+# Tempo armazena traces distribuidos (spans) de forma otimizada.
+# Ele complementa metrics (Prometheus) e logs (Loki).
+
 server:
+  # API HTTP para health checks e consultas via Grafana.
   http_listen_port: 3200
   log_level: info
 
 distributor:
+  # Camada de entrada de spans.
   receivers:
     otlp:
       protocols:
+        # OTLP gRPC: caminho mais comum para instrumentacao moderna.
         grpc:
           endpoint: 0.0.0.0:4317
+        # OTLP HTTP: alternativa quando gRPC nao esta disponivel.
         http:
           endpoint: 0.0.0.0:4318
 
 storage:
   trace:
+    # backend local em filesystem, adequado para lab/dev.
     backend: local
     local:
+      # Diretoria principal com blocos de traces.
       path: /var/tempo
     wal:
+      # WAL (write-ahead log) melhora resiliencia em falhas.
       path: /var/tempo/wal

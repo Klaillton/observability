@@ -1,0 +1,88 @@
+# ============================================================================
+# Restore sob demanda do banco SQLite do Grafana
+# ============================================================================
+# Este CronJob fica suspenso por padrao para evitar execucao acidental.
+# Fluxo recomendado de validacao:
+# 1) validar dry-run
+# 2) conferir integridade sqlite
+# 3) aplicar restore real apenas com backup confiavel
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: grafana-db-restore
+  namespace: observability
+spec:
+  # Suspenso por padrao: evita restore acidental em cada apply.
+  suspend: true
+  # Schedule simbolico, pois o job e acionado manualmente quando necessario.
+  schedule: "0 0 1 1 *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: restore
+              image: alpine:3.20
+              env:
+                # dry-run valida o backup sem sobrescrever o banco ativo.
+                - name: RESTORE_MODE
+                  value: dry-run
+                # Opcional: caminho absoluto do backup .db.gz dentro de /backup.
+                # Exemplo: /backup/grafana-20260427-175155.db.gz
+                - name: BACKUP_FILE
+                  value: ""
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  apk add --no-cache sqlite >/dev/null
+
+                  FILE="$BACKUP_FILE"
+                  if [ -z "$FILE" ]; then
+                    FILE="$(ls -1t /backup/grafana-*.db.gz 2>/dev/null | head -n1 || true)"
+                  fi
+
+                  if [ -z "$FILE" ] || [ ! -f "$FILE" ]; then
+                    echo "Nenhum arquivo de backup encontrado para restore"
+                    exit 1
+                  fi
+
+                  echo "Backup selecionado: $FILE"
+                  gunzip -c "$FILE" > /tmp/grafana-restore.db
+
+                  # Validacao de integridade do SQLite antes de qualquer acao.
+                  sqlite3 /tmp/grafana-restore.db "PRAGMA integrity_check;" | grep -q '^ok$'
+                  echo "Integridade SQLite validada"
+
+                  if [ "$RESTORE_MODE" = "dry-run" ]; then
+                    echo "Dry-run concluido com sucesso (sem alteracao no banco ativo)"
+                    exit 0
+                  fi
+
+                  # Antes de sobrescrever, cria backup de seguranca do estado atual.
+                  echo "Aplicando restore no banco ativo"
+                  TS="$(date +%Y%m%d-%H%M%S)"
+                  cp /var/lib/grafana/grafana.db "/var/lib/grafana/grafana.db.pre-restore-${TS}"
+                  cp /tmp/grafana-restore.db /var/lib/grafana/grafana.db
+                  chown 472:0 /var/lib/grafana/grafana.db
+                  chmod 640 /var/lib/grafana/grafana.db
+                  echo "Restore aplicado"
+              volumeMounts:
+                - name: grafana-storage
+                  mountPath: /var/lib/grafana
+                - name: grafana-backups
+                  mountPath: /backup
+                  readOnly: true
+          volumes:
+            - name: grafana-storage
+              persistentVolumeClaim:
+                claimName: grafana-storage
+            - name: grafana-backups
+              persistentVolumeClaim:
+                claimName: grafana-backups

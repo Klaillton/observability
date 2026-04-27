@@ -1,0 +1,39 @@
+# ============================================================================
+# Kustomization da stack observability
+# ============================================================================
+# Este arquivo atua como orquestrador declarativo dos manifestos do diretorio.
+# A ideia e centralizar composicao sem duplicar YAML.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: observability
+resources:
+  # Namespace dedicado para isolar recursos de observabilidade.
+  - namespace.yaml
+  # Configs de componentes e provisioning do Grafana.
+  - configmaps.yaml
+  # Volumes persistentes da stack.
+  - storage.yaml
+  # Deployments e Services principais.
+  - apps.yaml
+  # Exposicao HTTP via Traefik.
+  - ingress.yaml
+  # Backup periodico do banco do Grafana.
+  - backup.yaml
+  # Template de restore sob demanda (suspenso por padrao).
+  - restore.yaml
+generatorOptions:
+  # Mantem nome estavel para evitar quebrar mounts referenciados pelo Deployment.
+  disableNameSuffixHash: true
+configMapGenerator:
+  # Dashboards versionados no Git e provisionados automaticamente no startup do Grafana.
+  - name: grafana-dashboards
+    files:
+      - dashboards/observability-overview.json
+      - dashboards/traces-logs-correlation.json
+secretGenerator:
+  # Segredo local nao versionado (arquivo .env ignorado no Git).
+  # Em CI/CD, esse bloco pode ser substituido por External Secrets ou Sealed Secrets.
+  - name: grafana-admin
+    envs:
+      - secrets/grafana-admin.env
