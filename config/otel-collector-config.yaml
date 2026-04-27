@@ -1,30 +1,69 @@
+# ============================================================================
+# OpenTelemetry Collector - Configuracao
+# ============================================================================
+# Este arquivo define o pipeline de telemetria em tres estagios:
+# 1) receivers: onde os dados entram
+# 2) processors: como os dados sao tratados
+# 3) exporters: para onde os dados sao enviados
+#
+# Cada tipo de sinal (trace, metric, log) pode ter pipeline propria,
+# mantendo uma arquitetura enxuta para reduzir complexidade operacional.
+
 receivers:
+  # Receiver OTLP: padrao moderno para telemetria com OpenTelemetry.
+  # Vantagem: um protocolo unificado para traces, metrics e logs.
   otlp:
     protocols:
+      # gRPC costuma ser preferido por performance e streaming.
       grpc:
         endpoint: 0.0.0.0:4317
+      # HTTP e util para ambientes com restricao de rede/proxy.
       http:
         endpoint: 0.0.0.0:4318
 
 processors:
+  # batch agrupa telemetria antes de exportar.
+  # Beneficios:
+  # - reduz overhead de rede
+  # - melhora throughput
+  # - evita muitos envios pequenos
   batch:
 
 exporters:
+  # Exporter Prometheus: expoe metrics em endpoint para scrape.
+  # Nao envia para Prometheus por push; apenas publica endpoint.
   prometheus:
     endpoint: "0.0.0.0:8889"
-  otlp:
+
+  # Exporta traces para Tempo usando OTLP/gRPC.
+  # tls.insecure=true e aceitavel em ambiente local/lab.
+  # Em producao, prefira TLS valido e autenticacao.
+  otlp_grpc/tempo:
     endpoint: "tempo:4317"
     tls:
       insecure: true
+
+  # Exporta logs para Loki via endpoint OTLP HTTP.
+  # Loki converte OTLP logs para modelo interno de labels + linhas.
+  otlp_http/loki:
+    endpoint: "http://loki:3100/otlp"
+
+  # Exporter de debug apoia troubleshooting do pipeline.
+  # Pode gerar muito volume de logs, usar com cuidado.
   debug:
     verbosity: detailed
 
 service:
+  # Pipelines por tipo de sinal.
+  # Regra mental:
+  # traces -> Tempo
+  # metrics -> Prometheus endpoint
+  # logs -> Loki
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp]
+      exporters: [otlp_grpc/tempo]
     metrics:
       receivers: [otlp]
       processors: [batch]
@@ -32,4 +71,4 @@ service:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug]
+      exporters: [otlp_http/loki]

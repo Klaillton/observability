@@ -1,3 +1,5 @@
 .env
 grafana-storage/
 tempo-data/
+k8s/observability/secrets/*.env
+!k8s/observability/secrets/*.example.env

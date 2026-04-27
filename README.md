@@ -1,6 +1,6 @@
 # 📊 Observability
 
-Repositório centralizado de observabilidade para configuração, gerenciamento e monitorização de projetos locais — voltado para estudo, treinamento e demais necessidades que surjam ao longo do tempo.
+Repositório centralizado de observabilidade para configuração, gerenciamento e monitorização de projetos locais.
 
 ---
 
@@ -41,6 +41,22 @@ observability/
 
 ## ⚙️ Como Usar
 
+### Entendendo o fluxo de observabilidade deste repositorio
+
+1. A aplicacao instrumentada envia telemetria (traces, metrics, logs) para o OpenTelemetry Collector.
+2. O Collector roteia cada tipo de sinal para o backend certo:
+	- traces -> Tempo
+	- metrics -> endpoint Prometheus do proprio Collector
+	- logs -> Loki
+3. O Prometheus coleta metrics periodicamente por scrape.
+4. O Grafana consulta Prometheus, Loki e Tempo para dashboards e correlacao entre sinais.
+
+Em termos de desenho de arquitetura, pense em tres camadas:
+
+- Coleta e roteamento: OpenTelemetry Collector
+- Armazenamento especializado: Prometheus (metrics), Loki (logs), Tempo (traces)
+- Visualizacao e exploracao: Grafana
+
 ### Pré-requisitos
 
 - Docker e Docker Compose instalados
@@ -57,6 +73,28 @@ cd observability
 # Suba os serviços
 docker-compose up -d
 ```
+
+### Portas e para que servem
+
+- `3000`: Grafana (UI)
+- `3100`: Loki (API de logs)
+- `3200`: Tempo (API de traces)
+- `4317`: OTLP gRPC (entrada principal de telemetria)
+- `4318`: OTLP HTTP (entrada alternativa de telemetria)
+- `8889`: endpoint de metrics exportadas pelo Collector para scrape do Prometheus
+- `9090`: Prometheus (UI e API)
+
+### Roteiro de validacao tecnica
+
+Fluxo recomendado para validar a stack ponta a ponta:
+
+1. Suba a stack.
+2. Gere carga simples em uma aplicacao instrumentada.
+3. Confira traces no Tempo via Grafana.
+4. Localize logs da mesma requisicao no Loki.
+5. Compare latencia do trace com metricas de request duration no Prometheus.
+
+Esse ciclo ajuda a entender observabilidade de forma integrada, e nao como ferramentas isoladas.
 
 ---
 

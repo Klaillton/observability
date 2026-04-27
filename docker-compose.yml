@@ -33,7 +33,7 @@ services:
   #   - Reduces vendor lock-in with OpenTelemetry standard format
   # Architecture Role: Central hub in the observability pipeline
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.150.1
     container_name: otel-collector
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
@@ -61,7 +61,7 @@ services:
   #   - Multi-dimensional data model with labels
   # Metrics Stored: CPU, memory, requests, latency, custom business metrics, etc.
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.11.2
     container_name: prometheus
     volumes:
       - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro  # Scrape targets config
@@ -81,7 +81,7 @@ services:
   #   - Trace correlation and service dependency mapping
   # Use Case: Debug complex request flows across microservices
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.10.4
     container_name: tempo
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
@@ -103,7 +103,7 @@ services:
   #   - Real-time monitoring and alerting management
   # Architecture Role: Frontend for all observability data
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.0.1
     container_name: grafana
     ports:
       - "3000:3000"  # Grafana web UI

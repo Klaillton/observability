@@ -1,19 +1,36 @@
+# ============================================================================
+# Loki - Configuracao
+# ============================================================================
+# Loki foi desenhado para logs com indexacao por labels (nao full-text).
+# Isso reduz custo de armazenamento e simplifica operacao em varios cenarios.
+
+# Desabilita autenticacao para ambiente local.
+# Em producao, habilite autenticacao e controle de acesso.
 auth_enabled: false
 
 server:
+  # Porta HTTP para consultas, ingestao e health checks.
   http_listen_port: 3100
+  # Porta gRPC interna de servicos Loki.
   grpc_listen_port: 9096
 
 common:
+  # Endereco de instancia local.
   instance_addr: 127.0.0.1
+  # Prefixo padrao de paths internos no filesystem.
   path_prefix: /loki
   storage:
     filesystem:
+      # Chunks: blocos compactados com conteudo dos logs.
       chunks_directory: /loki/chunks
+      # Rules: area para regras (ex.: ruler) quando utilizadas.
       rules_directory: /loki/rules
+  # replication_factor=1 e adequado para ambiente single-node.
   replication_factor: 1
   ring:
     kvstore:
+      # in-memory simplifica execucao local.
+      # Em cluster, normalmente usa-se memberlist/consul/etcd.
       store: inmemory
 
 query_range:
@@ -21,18 +38,22 @@ query_range:
     cache:
       embedded_cache:
         enabled: true
+        # Cache local para acelerar consultas repetidas.
         max_size_mb: 100
 
 schema_config:
   configs:
+    # Define esquema de armazenamento/indexacao a partir desta data.
     - from: 2020-10-24
       store: tsdb
       object_store: filesystem
       schema: v13
       index:
         prefix: index_
+        # Rotacao diaria de indice.
         period: 24h
 
 limits_config:
+  # Limites de ingestao para evitar sobrecarga acidental.
   ingestion_rate_mb: 8
   ingestion_burst_size_mb: 16

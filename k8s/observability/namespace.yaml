@@ -1,0 +1,9 @@
+# Namespace dedicado para isolamento logico da stack.
+# Beneficios educacionais:
+# - facilita limpeza (delete namespace)
+# - evita colisao de nomes com outras apps
+# - simplifica politicas de acesso futuras
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability

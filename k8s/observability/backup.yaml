@@ -1,0 +1,59 @@
+# ============================================================================
+# Backup periodico do banco SQLite do Grafana
+# ============================================================================
+# Objetivo operacional:
+# - mostrar rotina simples de backup com CronJob
+# - introduzir retention basica
+# - demonstrar uso de volume compartilhado para backup
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: grafana-db-backup
+  namespace: observability
+spec:
+  # A cada 6 horas: equilibrio entre frequencia e custo para ambiente pequeno.
+  schedule: "0 */6 * * *"
+  # Evita execucoes concorrentes do mesmo backup.
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: alpine:3.20
+              # Script inline por simplicidade de manutencao.
+              # Em producao, prefira imagem propria versionada.
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  # Usa backup nativo do SQLite para snapshot consistente do arquivo.
+                  apk add --no-cache sqlite >/dev/null
+                  mkdir -p /backup
+                  TS="$(date +%Y%m%d-%H%M%S)"
+                  SRC="/var/lib/grafana/grafana.db"
+                  DST="/backup/grafana-${TS}.db"
+                  sqlite3 "$SRC" ".backup '$DST'"
+                  # Compressao reduz uso de storage e facilita retention.
+                  gzip -f "$DST"
+                  # Politica simples de retencao local: 14 dias.
+                  find /backup -type f -name 'grafana-*.db.gz' -mtime +14 -delete
+              volumeMounts:
+                - name: grafana-storage
+                  mountPath: /var/lib/grafana
+                  readOnly: true
+                - name: grafana-backups
+                  mountPath: /backup
+          volumes:
+            - name: grafana-storage
+              persistentVolumeClaim:
+                claimName: grafana-storage
+            - name: grafana-backups
+              persistentVolumeClaim:
+                claimName: grafana-backups

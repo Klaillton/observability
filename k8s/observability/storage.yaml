@@ -1,0 +1,58 @@
+# ============================================================================
+# Persistencia da stack de observabilidade
+# ============================================================================
+# PVCs garantem sobrevivencia de dados entre reinicios/redeploys de Pods.
+# Sem PVC, dashboards/logs/traces podem ser perdidos.
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-storage
+  namespace: observability
+spec:
+  # RWO = montado para leitura/escrita por um unico no por vez.
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # Banco SQLite e arquivos de estado do Grafana.
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-backups
+  namespace: observability
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # Area de backups compactados do banco do Grafana.
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tempo-data
+  namespace: observability
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # Traces e WAL do Tempo.
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loki-data
+  namespace: observability
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # Chunks e indices do Loki.
+      storage: 10Gi
