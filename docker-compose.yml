@@ -1,75 +1,138 @@
 services:
+  # ============================================================================
+  # LOKI - Log Storage & Aggregation (Backends)
+  # ============================================================================
+  # Type: Logging Backend (Time-series log aggregation)
+  # Purpose: Stores, indexes, and queries logs from applications and services
+  # Use Case: Centralized log storage similar to ELK stack but more lightweight
+  # Key Features:
+  #   - Cost-effective log storage and compression
+  #   - Label-based indexing (no full-text indexing)
+  #   - Integrates with Grafana for querying logs
+  #   - HTTP API for log ingestion and querying
   loki:
     image: grafana/loki:3.4.2
     container_name: loki
     command: ["-config.file=/etc/loki/config.yaml"]
     volumes:
-      - ./config/loki-config.yaml:/etc/loki/config.yaml:ro
-      - loki-data:/loki
+      - ./config/loki-config.yaml:/etc/loki/config.yaml:ro  # Read-only config
+      - loki-data:/loki                                      # Persistent log storage
     ports:
-      - "3100:3100"
+      - "3100:3100"  # Loki API endpoint for log push/query
     restart: unless-stopped
 
+  # ============================================================================
+  # OTEL COLLECTOR - Telemetry Data Processing (Data Ingestion & Pipeline)
+  # ============================================================================
+  # Type: Observability Data Collector (Receives and processes telemetry)
+  # Purpose: Unified entry point for traces, metrics, and logs from applications
+  # Key Features:
+  #   - Receivers: Accept data via OTLP (gRPC & HTTP), Jaeger, Prometheus, etc.
+  #   - Processors: Transform, sample, and batch telemetry data
+  #   - Exporters: Send data to backends (Tempo, Prometheus, Loki, etc.)
+  #   - Reduces vendor lock-in with OpenTelemetry standard format
+  # Architecture Role: Central hub in the observability pipeline
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
-      - ./config/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+      - ./config/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro  # Receiver/processor/exporter pipeline
     ports:
-      - "4317:4317"
-      - "4318:4318"
-      - "8888:8888"
-      - "8889:8889"
+      - "4317:4317"   # OTLP gRPC receiver (primary protocol for telemetry)
+      - "4318:4318"   # OTLP HTTP receiver (alternative protocol)
+      - "8888:8888"   # Prometheus metrics endpoint (collector own metrics)
+      - "8889:8889"   # Prometheus remote write exporter
     depends_on:
-      - tempo
-      - prometheus
-      - loki
+      - tempo        # Requires Tempo for trace export
+      - prometheus   # Requires Prometheus for metric export
+      - loki         # Requires Loki for log export
     restart: unless-stopped
 
+  # ============================================================================
+  # PROMETHEUS - Time-Series Database & Metrics Storage (Metrics Backend)
+  # ============================================================================
+  # Type: Metrics Storage & Retrieval (Pull-based time-series DB)
+  # Purpose: Stores and retrieves numerical metrics from applications
+  # Key Features:
+  #   - Pull-based model: Scrapes metrics from targets (/metrics endpoints)
+  #   - Powerful query language (PromQL) for time-series analysis
+  #   - Built-in alerting rules engine
+  #   - Multi-dimensional data model with labels
+  # Metrics Stored: CPU, memory, requests, latency, custom business metrics, etc.
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro  # Scrape targets config
     ports:
-      - "9090:9090"
+      - "9090:9090"  # Prometheus UI and API
     restart: unless-stopped
 
+  # ============================================================================
+  # TEMPO - Distributed Tracing Backend (Traces Storage)
+  # ============================================================================
+  # Type: Trace Storage & Query Engine (Distributed tracing backend)
+  # Purpose: Stores and retrieves distributed trace spans from microservices
+  # Key Features:
+  #   - Lightweight storage optimized for trace data
+  #   - Native integration with Grafana for trace visualization
+  #   - Support for multiple trace ingestion formats (OTLP, Jaeger, Zipkin)
+  #   - Trace correlation and service dependency mapping
+  # Use Case: Debug complex request flows across microservices
   tempo:
     image: grafana/tempo:latest
     container_name: tempo
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
-      - ./config/tempo-config.yaml:/etc/tempo.yaml:ro
-      - tempo-data:/var/tempo
+      - ./config/tempo-config.yaml:/etc/tempo.yaml:ro  # Ingestion/storage config
+      - tempo-data:/var/tempo                          # Persistent trace storage
     ports:
-      - "3200:3200"
+      - "3200:3200"  # Tempo API for trace ingestion and queries
     restart: unless-stopped
 
+  # ============================================================================
+  # GRAFANA - Visualization & Dashboards (UI Layer)
+  # ============================================================================
+  # Type: Data Visualization Platform (Web UI for observability)
+  # Purpose: Unified dashboard platform to visualize metrics, logs, and traces
+  # Key Features:
+  #   - Pre-built dashboards and alerts
+  #   - Data source integration (Prometheus, Loki, Tempo)
+  #   - Custom metrics/logs queries with PromQL and LogQL
+  #   - Real-time monitoring and alerting management
+  # Architecture Role: Frontend for all observability data
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "3000:3000"  # Grafana web UI
     volumes:
-      - grafana-storage:/var/lib/grafana
-      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-storage:/var/lib/grafana                        # Dashboards, datasources config persistence
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro  # Auto-provision datasources and dashboards
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-ChangeMeNow!}
-      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-ChangeMeNow!}  # Default admin password
+      - GF_USERS_ALLOW_SIGN_UP=false  # Disable self-registration for security
     depends_on:
-      - prometheus
-      - tempo
-      - loki
+      - prometheus  # Requires Prometheus as data source
+      - tempo       # Requires Tempo as trace data source
+      - loki        # Requires Loki as log data source
     restart: unless-stopped
 
+# ============================================================================
+# VOLUMES - Persistent Data Storage
+# ============================================================================
+# Named volumes ensure data persistence across container restarts and upgrades
 volumes:
-  tempo-data:
-  grafana-storage:
-  loki-data:
+  tempo-data:      # Stores distributed traces from Tempo backend
+  grafana-storage: # Persists Grafana dashboards, datasources, and user settings
+  loki-data:       # Stores compressed log data from Loki backend
 
+# ============================================================================
+# NETWORKS - Container Communication
+# ============================================================================
+# Docker network for inter-container communication and service discovery
 networks:
   default:
     name: observability-shared
-    external: true
+    external: true  # Network must be created externally before docker-compose up
