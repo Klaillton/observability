@@ -1,0 +1,232 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Saúde interna do OpenTelemetry Collector: volume de spans (traces), pontos de métrica e registros de log recebidos e exportados por segundo. Use para detectar perdas de telemetria no pipeline — se 'recebidos' cresce mas 'exportados' não, há dados sendo descartados ou filas cheias.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Spans (Traces): Recebidos vs Exportados",
+      "description": "Taxa de spans recebidos pelo receiver OTLP e exportados para o Tempo. Uma diferença persistente entre as duas linhas indica spans sendo descartados — verifique a fila do exporter e a conectividade com o Tempo.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum(rate(otelcol_receiver_accepted_spans_total[5m]))",
+          "refId": "A",
+          "legendFormat": "Recebidos"
+        },
+        {
+          "expr": "sum(rate(otelcol_exporter_sent_spans_total[5m]))",
+          "refId": "B",
+          "legendFormat": "Exportados"
+        },
+        {
+          "expr": "sum(rate(otelcol_exporter_send_failed_spans_total[5m]))",
+          "refId": "C",
+          "legendFormat": "Falhas de exportação"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Falhas de exportação"},
+            "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]
+          }
+        ]
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Pontos de Métrica: Recebidos vs Exportados",
+      "description": "Taxa de pontos de métrica recebidos (via OTLP) e exportados para o Prometheus. Cada scrape do Prometheus gera uma série de pontos; o collector precisa receber e reexportar todos sem perdas.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum(rate(otelcol_receiver_accepted_metric_points_total[5m]))",
+          "refId": "A",
+          "legendFormat": "Recebidos"
+        },
+        {
+          "expr": "sum(rate(otelcol_exporter_sent_metric_points_total[5m]))",
+          "refId": "B",
+          "legendFormat": "Exportados"
+        },
+        {
+          "expr": "sum(rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
+          "refId": "C",
+          "legendFormat": "Falhas de exportação"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Falhas de exportação"},
+            "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]
+          }
+        ]
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Registros de Log: Recebidos vs Exportados",
+      "description": "Taxa de log records recebidos via OTLP e exportados para o Loki. Logs são enviados por aplicações instrumentadas com OTel SDK ou via filelog receiver.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum(rate(otelcol_receiver_accepted_log_records_total[5m]))",
+          "refId": "A",
+          "legendFormat": "Recebidos"
+        },
+        {
+          "expr": "sum(rate(otelcol_exporter_sent_log_records_total[5m]))",
+          "refId": "B",
+          "legendFormat": "Exportados"
+        },
+        {
+          "expr": "sum(rate(otelcol_exporter_send_failed_log_records_total[5m]))",
+          "refId": "C",
+          "legendFormat": "Falhas de exportação"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Falhas de exportação"},
+            "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]
+          }
+        ]
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Tamanho da Fila do Exporter",
+      "description": "Número de itens atualmente na fila de exportação. Se essa fila está sempre cheia, o exporter não consegue entregar dados na velocidade que chegam — aumente o batch size ou verifique o destino.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum(otelcol_exporter_queue_size)",
+          "refId": "A",
+          "legendFormat": "Itens na fila"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 50},
+              {"color": "red", "value": 200}
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16}
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Spans Recusados (Receiver)",
+      "description": "Spans rejeitados pelo receiver — normalmente por rate limiting ou formato inválido. Qualquer valor acima de 0 merece atenção.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum(rate(otelcol_receiver_refused_spans_total[5m]))",
+          "refId": "A",
+          "legendFormat": "Recusados/s"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 1}
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 16}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["observability", "otel", "pipeline"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "OTel Collector Health",
+  "uid": "otel-collector-health",
+  "version": 1,
+  "weekStart": ""
+}

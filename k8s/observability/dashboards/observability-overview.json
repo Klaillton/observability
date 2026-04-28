@@ -15,6 +15,7 @@
       }
     ]
   },
+  "description": "Visão geral da stack de observabilidade. O painel 'Targets Up' mostra quantos alvos do Prometheus estão respondendo (verde = saudável, vermelho = down). O painel 'Recent Logs' exibe o stream de logs ao vivo do Loki. Use como tela inicial de monitoramento para uma saúde rápida do sistema.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -26,6 +27,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "Quantidade de alvos ativos no Prometheus. Se cair, algum componente da stack pode estar indisponivel (collector, node-exporter, apps, etc.).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -84,6 +86,7 @@
         "type": "loki",
         "uid": "loki"
       },
+      "description": "Fluxo de logs recentes no Loki. Use para triagem rapida de erros e para validar se as aplicacoes estao enviando logs para a stack.",
       "gridPos": {
         "h": 8,
         "w": 12,

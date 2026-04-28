@@ -96,6 +96,15 @@ Fluxo recomendado para validar a stack ponta a ponta:
 
 Esse ciclo ajuda a entender observabilidade de forma integrada, e nao como ferramentas isoladas.
 
+### Onboarding de novas aplicacoes no Kubernetes
+
+Para integrar novas aplicacoes na stack existente (OTel, Prometheus, Loki,
+Tempo e Grafana), siga o roteiro pratico em `k8s/observability/README.md`, na
+secao "Roteiro para novas aplicacoes (onboarding)".
+
+Template rapido de Deployment/Service para novas apps:
+`k8s/observability/examples/app-deployment-observability-template.yaml`.
+
 ---
 
 ## 🌿 Branches

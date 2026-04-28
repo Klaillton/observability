@@ -1,0 +1,255 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Métricas da aplicação coletadas via OpenTelemetry SDK seguindo as Semantic Conventions v1.x: requisições HTTP por rota/método, latências (P50/P99), taxa de erros HTTP, consultas ao banco de dados, contagem de threads/goroutines e profundidade de filas de mensagens. ATENÇÃO: os painéis exibem 'No data' até que a aplicação seja instrumentada com OTel SDK e configurada para enviar para otel-collector:4317 (gRPC) ou otel-collector:4318 (HTTP).",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "HTTP: Taxa de Requisições por Rota",
+      "description": "Requisições por segundo agrupadas por rota HTTP e método. Permite ver quais endpoints são mais acessados e detectar picos de tráfego inesperados. Métrica OTel: http_server_request_duration_seconds_count (Semantic Convention HTTP).",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum by(http_route, http_request_method) (rate(http_server_request_duration_seconds_count[5m]))",
+          "refId": "A",
+          "legendFormat": "{{http_request_method}} {{http_route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "HTTP: Latência P50 e P99 por Rota",
+      "description": "Latência de resposta HTTP no percentil 50 (mediana) e 99. P99 = 99% das requests respondem em X ms ou menos. Valores altos de P99 indicam casos extremos de lentidão mesmo quando a mediana parece normal. Métrica OTel: http_server_request_duration_seconds_bucket.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by(le, http_route) (rate(http_server_request_duration_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "P50 {{http_route}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by(le, http_route) (rate(http_server_request_duration_seconds_bucket[5m])))",
+          "refId": "B",
+          "legendFormat": "P99 {{http_route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {"lineWidth": 2, "fillOpacity": 5}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "HTTP: Taxa de Erros (4xx e 5xx)",
+      "description": "Percentual de requisições HTTP com status de erro. 4xx = erro do cliente (ex: 404, 401, 400). 5xx = erro do servidor (ex: 500, 503). Uma taxa de 5xx crescente indica problema na aplicação; 4xx alto pode indicar clientes mal configurados ou endpoints inexistentes.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"4..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100",
+          "refId": "A",
+          "legendFormat": "Erros 4xx %"
+        },
+        {
+          "expr": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100",
+          "refId": "B",
+          "legendFormat": "Erros 5xx %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1},
+              {"color": "red", "value": 5}
+            ]
+          },
+          "custom": {"lineWidth": 2, "fillOpacity": 20}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Banco de Dados: Duração das Operações P99",
+      "description": "Latência P99 de operações no banco de dados, agrupadas por tipo de operação (SELECT, INSERT, UPDATE, DELETE). Valores altos indicam queries lentas, índices ausentes ou sobrecarga do banco. Métrica OTel: db_client_operation_duration_seconds_bucket (Semantic Convention DB).",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by(le, db_operation_name) (rate(db_client_operation_duration_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "P99 {{db_operation_name}}"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum by(le, db_operation_name) (rate(db_client_operation_duration_seconds_bucket[5m])))",
+          "refId": "B",
+          "legendFormat": "P50 {{db_operation_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {"lineWidth": 2, "fillOpacity": 5}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Banco de Dados: Taxa de Consultas por Operação",
+      "description": "Número de operações no banco por segundo. Picos em UPDATE/DELETE durante horários inesperados podem indicar jobs agendados ou vazamentos de transação. Métrica OTel: db_client_operation_duration_seconds_count.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum by(db_operation_name) (rate(db_client_operation_duration_seconds_count[5m]))",
+          "refId": "A",
+          "legendFormat": "{{db_operation_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Threads / Goroutines Ativas",
+      "description": "Número de threads (Java/C#) ou goroutines (Go) em execução. Crescimento contínuo sem estabilização indica vazamento de threads (thread leak) — threads são criadas mas não destruídas. Para Go: process_runtime_go_goroutines. Para JVM: jvm_threads_current. Para .NET: process_thread_count.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "process_runtime_go_goroutines",
+          "refId": "A",
+          "legendFormat": "Goroutines (Go) - {{job}}"
+        },
+        {
+          "expr": "jvm_threads_current",
+          "refId": "B",
+          "legendFormat": "Threads (JVM) - {{job}}"
+        },
+        {
+          "expr": "process_thread_count",
+          "refId": "C",
+          "legendFormat": "Threads (.NET) - {{job}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Fila de Mensagens: Mensagens Publicadas e Processadas",
+      "description": "Taxa de mensagens publicadas e consumidas em filas (RabbitMQ, Kafka, SQS, etc.). A diferença entre publicadas e processadas indica acúmulo na fila (backpressure). Se a fila cresce indefinidamente, os consumers não acompanham os producers. Métrica OTel: messaging_client_published_messages_total e messaging_receive_duration_seconds_count (Semantic Convention Messaging).",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum by(messaging_system, messaging_destination_name) (rate(messaging_client_published_messages_total[5m]))",
+          "refId": "A",
+          "legendFormat": "Publicadas - {{messaging_system}}/{{messaging_destination_name}}"
+        },
+        {
+          "expr": "sum by(messaging_system, messaging_destination_name) (rate(messaging_receive_duration_seconds_count[5m]))",
+          "refId": "B",
+          "legendFormat": "Processadas - {{messaging_system}}/{{messaging_destination_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["observability", "application", "http", "database", "messaging"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Application Metrics",
+  "uid": "application-metrics",
+  "version": 1,
+  "weekStart": ""
+}
