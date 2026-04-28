@@ -91,6 +91,8 @@ stack de observabilidade ja existente.
 Template pronto para copiar e adaptar:
 
 - `k8s/observability/examples/app-deployment-observability-template.yaml`
+- `k8s/observability/examples/app-deployment-java-spring-otel-template.yaml`
+- `k8s/observability/examples/app-deployment-nodejs-otel-template.yaml`
 
 ### 1) Instrumentar a aplicacao com OpenTelemetry
 
@@ -148,3 +150,16 @@ No Grafana, valide nesta ordem:
 Crie dashboard dedicado somente quando houver requisito especifico de negocio
 (SLOs, KPIs, funis, eventos de dominio). Para operacao tecnica inicial, os
 dashboards atuais ja cobrem o necessario.
+
+## Checklist de go-live de observabilidade (por aplicacao)
+
+Use este checklist antes de promover a aplicacao para ambiente compartilhado:
+
+1. `service.name` definido e estavel entre releases.
+2. App enviando OTLP para `otel-collector.observability.svc.cluster.local`.
+3. Logs contem `trace_id` e `span_id` para correlacao.
+4. Dashboard `Application Metrics` com trafego e latencia visiveis.
+5. Dashboard `Traces and Logs Correlation` com traces recentes e logs.
+6. Sem falhas relevantes no dashboard `OTel Collector Health`.
+7. Alertas minimos definidos (erro 5xx, latencia P99, indisponibilidade).
+8. Dono responsavel do servico e canal de incidente registrados.

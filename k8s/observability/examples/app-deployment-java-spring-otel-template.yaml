@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minha-app-java
+  namespace: apps
+  labels:
+    app: minha-app-java
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minha-app-java
+  template:
+    metadata:
+      labels:
+        app: minha-app-java
+    spec:
+      containers:
+        - name: minha-app-java
+          image: ghcr.io/org/minha-app-java:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            # Identidade do servico no OpenTelemetry.
+            - name: OTEL_SERVICE_NAME
+              value: minha-app-java
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: service.namespace=apps,service.version=1.0.0,deployment.environment=dev
+
+            # Endpoint OTLP para envio de traces/metrics/logs.
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.observability.svc.cluster.local:4318
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: http/protobuf
+
+            # Java agent (se empacotado na imagem em /otel/opentelemetry-javaagent.jar).
+            - name: JAVA_TOOL_OPTIONS
+              value: -javaagent:/otel/opentelemetry-javaagent.jar
+
+            # Sinais habilitados.
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER
+              value: otlp
+            - name: OTEL_LOGS_EXPORTER
+              value: otlp
+
+            # Captura automatica de logs da aplicacao via Java agent.
+            - name: OTEL_INSTRUMENTATION_LOGBACK_APPENDER_ENABLED
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 150m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minha-app-java
+  namespace: apps
+  labels:
+    app: minha-app-java
+spec:
+  selector:
+    app: minha-app-java
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: ClusterIP

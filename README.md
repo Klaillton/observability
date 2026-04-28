@@ -105,6 +105,14 @@ secao "Roteiro para novas aplicacoes (onboarding)".
 Template rapido de Deployment/Service para novas apps:
 `k8s/observability/examples/app-deployment-observability-template.yaml`.
 
+Templates especificos:
+
+- `k8s/observability/examples/app-deployment-java-spring-otel-template.yaml`
+- `k8s/observability/examples/app-deployment-nodejs-otel-template.yaml`
+
+Checklist de go-live por aplicacao:
+`k8s/observability/README.md` (secao "Checklist de go-live de observabilidade").
+
 ---
 
 ## 🌿 Branches
