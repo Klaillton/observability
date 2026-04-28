@@ -26,8 +26,10 @@ storage:
     # backend local em filesystem, adequado para lab/dev.
     backend: local
     local:
-      # Diretoria principal com blocos de traces.
-      path: /var/tempo
+      # Diretoria exclusiva para blocos compactados de traces.
+      # Nao deve incluir o subdiretorio do WAL para evitar que o poller
+      # trate `wal` como se fosse tenant de blocos.
+      path: /var/tempo/traces
     wal:
       # WAL (write-ahead log) melhora resiliencia em falhas.
       path: /var/tempo/wal

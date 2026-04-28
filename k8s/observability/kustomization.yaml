@@ -22,6 +22,8 @@ resources:
   - backup.yaml
   # Template de restore sob demanda (suspenso por padrao).
   - restore.yaml
+  # Agente de metricas do host: coleta CPU, memoria, disco e rede via /proc e /sys.
+  - node-exporter.yaml
 generatorOptions:
   # Mantem nome estavel para evitar quebrar mounts referenciados pelo Deployment.
   disableNameSuffixHash: true
@@ -29,8 +31,15 @@ configMapGenerator:
   # Dashboards versionados no Git e provisionados automaticamente no startup do Grafana.
   - name: grafana-dashboards
     files:
+      - dashboards/brewer-app.json
       - dashboards/observability-overview.json
       - dashboards/traces-logs-correlation.json
+      # Dashboard de recursos do servidor (requer node-exporter rodando).
+      - dashboards/server-resources.json
+      # Dashboard de saude interna do OTel Collector.
+      - dashboards/otel-collector-health.json
+      # Dashboard de metricas de aplicacao via OTel SDK.
+      - dashboards/application-metrics.json
 secretGenerator:
   # Segredo local nao versionado (arquivo .env ignorado no Git).
   # Em CI/CD, esse bloco pode ser substituido por External Secrets ou Sealed Secrets.

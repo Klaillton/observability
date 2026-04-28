@@ -1,0 +1,258 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Dashboard dedicado da aplicação brewer, usando as métricas reais exportadas pelo Spring Boot/Micrometer via OpenTelemetry Collector.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "HTTP: Taxa de Requisições por Rota",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum by(uri, method) (rate(http_server_requests_milliseconds_count{exported_job=\"brewer\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "{{method}} {{uri}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "HTTP: Latência P50 e P99",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by(le, uri) (rate(http_server_requests_milliseconds_bucket{exported_job=\"brewer\"}[5m]))) / 1000",
+          "refId": "A",
+          "legendFormat": "P50 {{uri}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by(le, uri) (rate(http_server_requests_milliseconds_bucket{exported_job=\"brewer\"}[5m]))) / 1000",
+          "refId": "B",
+          "legendFormat": "P99 {{uri}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {"lineWidth": 2, "fillOpacity": 8}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "HTTP: Taxa de Erros",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_milliseconds_count{exported_job=\"brewer\",status=~\"4..\"}[5m])) / clamp_min(sum(rate(http_server_requests_milliseconds_count{exported_job=\"brewer\"}[5m])), 0.0001) * 100",
+          "refId": "A",
+          "legendFormat": "Erros 4xx %"
+        },
+        {
+          "expr": "sum(rate(http_server_requests_milliseconds_count{exported_job=\"brewer\",status=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_requests_milliseconds_count{exported_job=\"brewer\"}[5m])), 0.0001) * 100",
+          "refId": "B",
+          "legendFormat": "Erros 5xx %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1},
+              {"color": "red", "value": 5}
+            ]
+          },
+          "custom": {"lineWidth": 2, "fillOpacity": 16}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Banco: Pool Hikari",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{exported_job=\"brewer\"}",
+          "refId": "A",
+          "legendFormat": "Ativas {{pool}}"
+        },
+        {
+          "expr": "hikaricp_connections_idle{exported_job=\"brewer\"}",
+          "refId": "B",
+          "legendFormat": "Ociosas {{pool}}"
+        },
+        {
+          "expr": "hikaricp_connections_pending{exported_job=\"brewer\"}",
+          "refId": "C",
+          "legendFormat": "Pendentes {{pool}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Banco: Latência de Aquisição do Pool",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by(le, pool) (rate(hikaricp_connections_acquire_milliseconds_bucket{exported_job=\"brewer\"}[5m]))) / 1000",
+          "refId": "A",
+          "legendFormat": "P99 {{pool}}"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum by(le, pool) (rate(hikaricp_connections_acquire_milliseconds_bucket{exported_job=\"brewer\"}[5m]))) / 1000",
+          "refId": "B",
+          "legendFormat": "P50 {{pool}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {"lineWidth": 2, "fillOpacity": 8}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "JVM: Threads",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "jvm_threads_live{exported_job=\"brewer\"}",
+          "refId": "A",
+          "legendFormat": "Live"
+        },
+        {
+          "expr": "jvm_threads_daemon{exported_job=\"brewer\"}",
+          "refId": "B",
+          "legendFormat": "Daemon"
+        },
+        {
+          "expr": "jvm_threads_peak{exported_job=\"brewer\"}",
+          "refId": "C",
+          "legendFormat": "Peak"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "JVM: Memória Heap e Non-Heap",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum by(area) (jvm_memory_used_bytes{exported_job=\"brewer\"})",
+          "refId": "A",
+          "legendFormat": "Usada {{area}}"
+        },
+        {
+          "expr": "sum by(area) (jvm_memory_committed_bytes{exported_job=\"brewer\"})",
+          "refId": "B",
+          "legendFormat": "Committed {{area}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {"lineWidth": 2, "fillOpacity": 8}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "desc"},
+        "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["observability", "brewer", "spring-boot", "jvm"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Brewer Aplicação",
+  "uid": "brewer-app",
+  "version": 1,
+  "weekStart": ""
+}

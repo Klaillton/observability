@@ -1,0 +1,265 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Recursos físicos do servidor coletados via node_exporter: uso de CPU por núcleos, memória RAM usada vs disponível, carga média do sistema (load average), taxa de leitura/escrita em disco e tráfego de rede. Use para identificar gargalos de infraestrutura como CPU saturada, memória esgotada ou I/O de disco alto.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Uso de CPU (%)",
+      "description": "Percentual médio de CPU não ociosa, agregado por todos os núcleos. 100% = CPU totalmente saturada. Calculado como 100 menos a taxa de tempo no modo 'idle' — inclui user, system, iowait e irq.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "refId": "A",
+          "legendFormat": "CPU Total %"
+        },
+        {
+          "expr": "avg by(cpu) (rate(node_cpu_seconds_total{mode=\"iowait\"}[5m])) * 100",
+          "refId": "B",
+          "legendFormat": "CPU {{cpu}} iowait %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 70},
+              {"color": "red", "value": 90}
+            ]
+          },
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Memória RAM: Usada vs Disponível",
+      "description": "Consumo de memória RAM em bytes. 'Usada' = MemTotal menos MemAvailable (inclui buffers e cache que o kernel pode liberar). Quando 'Disponível' cair abaixo de 100 MB há risco de OOM (Out of Memory), o kernel começa a matar processos.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+          "refId": "A",
+          "legendFormat": "Usada"
+        },
+        {
+          "expr": "node_memory_MemAvailable_bytes",
+          "refId": "B",
+          "legendFormat": "Disponível"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Load Average (carga do sistema)",
+      "description": "Número médio de processos em execução ou aguardando CPU nos últimos 1, 5 e 15 minutos. Valores acima do número de núcleos físicos (nproc) indicam saturação — processos estão esperando CPU disponível. Por exemplo: load 4.0 num servidor com 4 núcleos = 100% de utilização.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {"expr": "node_load1",  "refId": "A", "legendFormat": "1 min"},
+        {"expr": "node_load5",  "refId": "B", "legendFormat": "5 min"},
+        {"expr": "node_load15", "refId": "C", "legendFormat": "15 min"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"lineWidth": 2, "fillOpacity": 5}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Disco: Taxa de Leitura/Escrita",
+      "description": "Bytes por segundo lidos e escritos em todos os discos. Picos de escrita podem indicar flush de cache ou commit de banco de dados. Leitura alta persistente pode indicar thrashing (swapping) ou acesso intenso a dados não cacheados.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum(rate(node_disk_read_bytes_total[5m]))",
+          "refId": "A",
+          "legendFormat": "Leitura"
+        },
+        {
+          "expr": "sum(rate(node_disk_written_bytes_total[5m]))",
+          "refId": "B",
+          "legendFormat": "Escrita"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Rede: Tráfego de Entrada/Saída",
+      "description": "Bytes por segundo trafegados nas interfaces de rede, excluindo loopback (lo). 'Entrada' = dados recebidos pelo servidor (ex: requests HTTP chegando). 'Saída' = dados enviados (ex: respostas, uploads). Útil para detectar saturação de banda ou transferências inesperadas.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "sum(rate(node_network_receive_bytes_total{device!=\"lo\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "Entrada (RX)"
+        },
+        {
+          "expr": "sum(rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]))",
+          "refId": "B",
+          "legendFormat": "Saída (TX)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {"lineWidth": 2, "fillOpacity": 10}
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {"mode": "multi", "sort": "none"},
+        "legend": {"displayMode": "list", "placement": "bottom"}
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Uso de Disco (%)",
+      "description": "Percentual de espaço usado no filesystem principal (/). Quando acima de 85% o sistema começa a ter problemas; acima de 95% é crítico.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"}) * 100)",
+          "refId": "A",
+          "legendFormat": "Disco usado %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 75},
+              {"color": "red", "value": 90}
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 24}
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Uptime do Servidor",
+      "description": "Tempo em segundos desde o último boot do sistema. Reboots inesperados aparecem como queda brusca neste valor.",
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "targets": [
+        {
+          "expr": "time() - node_boot_time_seconds",
+          "refId": "A",
+          "legendFormat": "Uptime"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "blue", "value": null}]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 24}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["observability", "infrastructure", "node-exporter"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Server Resources",
+  "uid": "server-resources",
+  "version": 1,
+  "weekStart": ""
+}

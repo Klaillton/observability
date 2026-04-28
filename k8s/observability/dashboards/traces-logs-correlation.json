@@ -15,6 +15,7 @@
       }
     ]
   },
+  "description": "Correlação entre traces distribuídos e logs. O painel esquerdo lista as requests mais recentes capturadas pelo Tempo (distributed tracing). O painel direito mostra logs do Loki com link clicável no campo TraceID — clicar no ID abre o trace correspondente no Tempo. Use para depurar erros: encontre o trace com erro, clique no TraceID e veja os logs exatos daquela execução.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -26,6 +27,7 @@
         "type": "tempo",
         "uid": "tempo"
       },
+      "description": "Lista traces recentes do Tempo para investigar latencia e erros por requisicao. Se estiver vazio, verifique se as aplicacoes estao enviando traces ao OTel Collector.",
       "gridPos": {
         "h": 10,
         "w": 12,
@@ -60,6 +62,7 @@
         "type": "loki",
         "uid": "loki"
       },
+      "description": "Logs recentes do Loki para correlacionar com traces. Procure campos como trace_id/span_id para abrir o trace correspondente no Tempo.",
       "gridPos": {
         "h": 10,
         "w": 12,
