@@ -31,6 +31,7 @@ configMapGenerator:
   # Dashboards versionados no Git e provisionados automaticamente no startup do Grafana.
   - name: grafana-dashboards
     files:
+      - dashboards/brewer-app.json
       - dashboards/observability-overview.json
       - dashboards/traces-logs-correlation.json
       # Dashboard de recursos do servidor (requer node-exporter rodando).

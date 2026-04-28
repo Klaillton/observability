@@ -81,7 +81,9 @@ data:
       trace:
         backend: local
         local:
-          path: /var/tempo
+          # Separa blocos de traces do WAL para o poller nao indexar `wal`
+          # como se fosse um tenant valido.
+          path: /var/tempo/traces
         wal:
           # WAL melhora recuperacao apos falhas abruptas.
           path: /var/tempo/wal

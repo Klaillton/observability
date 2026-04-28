@@ -12,7 +12,7 @@
       }
     ]
   },
-  "description": "Métricas da aplicação coletadas via OpenTelemetry SDK seguindo as Semantic Conventions v1.x: requisições HTTP por rota/método, latências (P50/P99), taxa de erros HTTP, consultas ao banco de dados, contagem de threads/goroutines e profundidade de filas de mensagens. ATENÇÃO: os painéis exibem 'No data' até que a aplicação seja instrumentada com OTel SDK e configurada para enviar para otel-collector:4317 (gRPC) ou otel-collector:4318 (HTTP).",
+  "description": "Métricas da aplicação coletadas via OpenTelemetry Collector. Os painéis priorizam métricas OTel Semantic Conventions v1.x, mas incluem fallback para séries comuns de Spring Boot/Micrometer exportadas por OTLP, como as da app brewer. ATENÇÃO: os painéis exibem 'No data' até que a aplicação envie métricas para o collector em otel-collector:4317 (gRPC) ou otel-collector:4318 (HTTP).",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -23,11 +23,11 @@
       "id": 1,
       "type": "timeseries",
       "title": "HTTP: Taxa de Requisições por Rota",
-      "description": "Requisições por segundo agrupadas por rota HTTP e método. Permite ver quais endpoints são mais acessados e detectar picos de tráfego inesperados. Métrica OTel: http_server_request_duration_seconds_count (Semantic Convention HTTP).",
+      "description": "Requisições por segundo agrupadas por rota HTTP e método. Permite ver quais endpoints são mais acessados e detectar picos de tráfego inesperados. Compatível com métricas OTel padronizadas e com http_server_requests_milliseconds_count exportada por apps Spring Boot/Micrometer como a brewer.",
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "targets": [
         {
-          "expr": "sum by(http_route, http_request_method) (rate(http_server_request_duration_seconds_count[5m]))",
+          "expr": "sum by(http_route, http_request_method) (rate(http_server_request_duration_seconds_count[5m])) or sum by(http_route, http_request_method) (label_replace(label_replace(rate(http_server_requests_milliseconds_count[5m]), \"http_route\", \"$1\", \"uri\", \"(.*)\"), \"http_request_method\", \"$1\", \"method\", \"(.*)\"))",
           "refId": "A",
           "legendFormat": "{{http_request_method}} {{http_route}}"
         }
@@ -49,16 +49,16 @@
       "id": 2,
       "type": "timeseries",
       "title": "HTTP: Latência P50 e P99 por Rota",
-      "description": "Latência de resposta HTTP no percentil 50 (mediana) e 99. P99 = 99% das requests respondem em X ms ou menos. Valores altos de P99 indicam casos extremos de lentidão mesmo quando a mediana parece normal. Métrica OTel: http_server_request_duration_seconds_bucket.",
+      "description": "Latência de resposta HTTP no percentil 50 (mediana) e 99. P99 = 99% das requests respondem em X s ou menos. Valores altos de P99 indicam casos extremos de lentidão mesmo quando a mediana parece normal. Compatível com histograms OTel em segundos e com http_server_requests_milliseconds_bucket de apps Spring Boot/Micrometer.",
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum by(le, http_route) (rate(http_server_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.50, sum by(le, http_route) (rate(http_server_request_duration_seconds_bucket[5m]))) or histogram_quantile(0.50, sum by(le, http_route) (label_replace(rate(http_server_requests_milliseconds_bucket[5m]), \"http_route\", \"$1\", \"uri\", \"(.*)\"))) / 1000",
           "refId": "A",
           "legendFormat": "P50 {{http_route}}"
         },
         {
-          "expr": "histogram_quantile(0.99, sum by(le, http_route) (rate(http_server_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.99, sum by(le, http_route) (rate(http_server_request_duration_seconds_bucket[5m]))) or histogram_quantile(0.99, sum by(le, http_route) (label_replace(rate(http_server_requests_milliseconds_bucket[5m]), \"http_route\", \"$1\", \"uri\", \"(.*)\"))) / 1000",
           "refId": "B",
           "legendFormat": "P99 {{http_route}}"
         }
@@ -80,16 +80,16 @@
       "id": 3,
       "type": "timeseries",
       "title": "HTTP: Taxa de Erros (4xx e 5xx)",
-      "description": "Percentual de requisições HTTP com status de erro. 4xx = erro do cliente (ex: 404, 401, 400). 5xx = erro do servidor (ex: 500, 503). Uma taxa de 5xx crescente indica problema na aplicação; 4xx alto pode indicar clientes mal configurados ou endpoints inexistentes.",
+      "description": "Percentual de requisições HTTP com status de erro. 4xx = erro do cliente (ex: 404, 401, 400). 5xx = erro do servidor (ex: 500, 503). Compatível com labels OTel e com o label status das séries Spring Boot/Micrometer exportadas pela brewer.",
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "targets": [
         {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"4..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100",
+          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"4..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100) or (sum(rate(http_server_requests_milliseconds_count{status=~\"4..\"}[5m])) / sum(rate(http_server_requests_milliseconds_count[5m])) * 100)",
           "refId": "A",
           "legendFormat": "Erros 4xx %"
         },
         {
-          "expr": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100",
+          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100) or (sum(rate(http_server_requests_milliseconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_milliseconds_count[5m])) * 100)",
           "refId": "B",
           "legendFormat": "Erros 5xx %"
         }
@@ -119,19 +119,19 @@
     {
       "id": 4,
       "type": "timeseries",
-      "title": "Banco de Dados: Duração das Operações P99",
-      "description": "Latência P99 de operações no banco de dados, agrupadas por tipo de operação (SELECT, INSERT, UPDATE, DELETE). Valores altos indicam queries lentas, índices ausentes ou sobrecarga do banco. Métrica OTel: db_client_operation_duration_seconds_bucket (Semantic Convention DB).",
+      "title": "Banco de Dados: Latência P99",
+      "description": "Latência P99 de operações no banco de dados. Quando a aplicação publica métricas OTel de cliente DB, o painel usa db_client_operation_duration_seconds_bucket. Para apps Spring Boot com HikariCP, exibe fallback com a latência P99 de aquisição de conexão do pool.",
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "targets": [
         {
           "expr": "histogram_quantile(0.99, sum by(le, db_operation_name) (rate(db_client_operation_duration_seconds_bucket[5m])))",
           "refId": "A",
-          "legendFormat": "P99 {{db_operation_name}}"
+          "legendFormat": "Operações {{db_operation_name}}"
         },
         {
-          "expr": "histogram_quantile(0.50, sum by(le, db_operation_name) (rate(db_client_operation_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.99, sum by(le, pool) (rate(hikaricp_connections_acquire_milliseconds_bucket[5m]))) / 1000",
           "refId": "B",
-          "legendFormat": "P50 {{db_operation_name}}"
+          "legendFormat": "Pool {{pool}}"
         }
       ],
       "fieldConfig": {
@@ -150,14 +150,19 @@
     {
       "id": 5,
       "type": "timeseries",
-      "title": "Banco de Dados: Taxa de Consultas por Operação",
-      "description": "Número de operações no banco por segundo. Picos em UPDATE/DELETE durante horários inesperados podem indicar jobs agendados ou vazamentos de transação. Métrica OTel: db_client_operation_duration_seconds_count.",
+      "title": "Banco de Dados: Pool de Conexões",
+      "description": "Estado atual do pool de conexões. Para apps instrumentadas com OTel DB, ainda é possível expandir com métricas por operação; para a brewer, este painel mostra conexões ativas e ociosas do HikariCP, que são os sinais disponíveis hoje.",
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "targets": [
         {
-          "expr": "sum by(db_operation_name) (rate(db_client_operation_duration_seconds_count[5m]))",
+          "expr": "sum by(pool) (hikaricp_connections_active)",
           "refId": "A",
-          "legendFormat": "{{db_operation_name}}"
+          "legendFormat": "Ativas {{pool}}"
+        },
+        {
+          "expr": "sum by(pool) (hikaricp_connections_idle)",
+          "refId": "B",
+          "legendFormat": "Ociosas {{pool}}"
         }
       ],
       "fieldConfig": {
@@ -177,7 +182,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Threads / Goroutines Ativas",
-      "description": "Número de threads (Java/C#) ou goroutines (Go) em execução. Crescimento contínuo sem estabilização indica vazamento de threads (thread leak) — threads são criadas mas não destruídas. Para Go: process_runtime_go_goroutines. Para JVM: jvm_threads_current. Para .NET: process_thread_count.",
+      "description": "Número de threads (Java/C#) ou goroutines (Go) em execução. Crescimento contínuo sem estabilização indica vazamento de threads (thread leak). Compatível com jvm_threads_current e jvm_threads_live para JVMs instrumentadas de formas diferentes.",
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "targets": [
         {
@@ -186,7 +191,7 @@
           "legendFormat": "Goroutines (Go) - {{job}}"
         },
         {
-          "expr": "jvm_threads_current",
+          "expr": "jvm_threads_current or jvm_threads_live",
           "refId": "B",
           "legendFormat": "Threads (JVM) - {{job}}"
         },
@@ -250,6 +255,6 @@
   "timezone": "",
   "title": "Application Metrics",
   "uid": "application-metrics",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
