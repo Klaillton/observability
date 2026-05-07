@@ -132,3 +132,18 @@ spec:
           hostPath:
             path: /var/lib/docker/containers
             type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: promtail
+  namespace: observability
+  labels:
+    app: promtail
+spec:
+  selector:
+    app: promtail
+  ports:
+    - name: http
+      port: 3101
+      targetPort: http

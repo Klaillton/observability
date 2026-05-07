@@ -36,6 +36,11 @@ scrape_configs:
     static_configs:
       - targets: ['kube-state-metrics:8080']
 
+  # Coleta metricas do Promtail (coleta e envio de logs para o Loki).
+  - job_name: 'promtail'
+    static_configs:
+      - targets: ['promtail:3101']
+
   # Exemplo de alvo de aplicacao Spring Boot.
   # Mantido para referencia de instrumentacao de aplicacao real.
   # Em Kubernetes, esse alvo foi removido no pacote k8s para evitar erro
