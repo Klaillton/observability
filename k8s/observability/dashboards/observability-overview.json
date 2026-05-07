@@ -598,18 +598,142 @@
     },
     {
       "id": 10,
-      "type": "text",
-      "title": "Componentes e Imagens (Manifesto K8s)",
-      "description": "Inventario das imagens declaradas em apps.yaml para facilitar correlacao de versao durante troubleshooting.",
+      "type": "table",
+      "title": "Imagens em Execucao (namespace observability)",
+      "description": "Mostra pod, container e imagem em runtime via kube-state-metrics.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "targets": [
+        {
+          "expr": "kube_pod_container_info{namespace=\"observability\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "uid": true
+            },
+            "renameByName": {
+              "container": "container",
+              "image": "imagem",
+              "namespace": "namespace",
+              "pod": "pod"
+            }
+          }
+        }
+      ],
       "options": {
-        "mode": "markdown",
-        "content": "| Recurso | Imagem declarada |\n|---|---|\n| Loki | grafana/loki:3.4.2 |\n| Tempo | grafana/tempo:2.10.4 |\n| Prometheus | prom/prometheus:v3.11.2 |\n| OTel Collector | otel/opentelemetry-collector-contrib:0.150.1 |\n| Grafana | grafana/grafana:13.0.1 |\n| Node Exporter | prom/node-exporter:v1.8.2 |\n\nEstas versoes sao o estado desejado do manifesto Kubernetes. Para visualizar imagem em execucao por pod automaticamente, adicione kube-state-metrics ao Prometheus e um painel baseado em kube_pod_container_info."
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
       },
       "gridPos": {
         "h": 10,
         "w": 8,
         "x": 16,
         "y": 12
+      },
+      "pluginVersion": "13.0.1"
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Pods Prontos (UP/DOWN)",
+      "description": "Status de readiness por pod no namespace observability.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "targets": [
+        {
+          "expr": "max by (namespace,pod) (kube_pod_status_ready{namespace=\"observability\",condition=\"true\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "uid": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value": "ready",
+              "namespace": "namespace",
+              "pod": "pod"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 22
       },
       "pluginVersion": "13.0.1"
     }
@@ -632,6 +756,6 @@
   "timezone": "",
   "title": "Observability Overview",
   "uid": "obs-overview",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }

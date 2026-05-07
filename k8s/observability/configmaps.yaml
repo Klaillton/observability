@@ -122,6 +122,12 @@ data:
       - job_name: node-exporter
         static_configs:
           - targets: ['node-exporter:9100']
+
+      # kube-state-metrics: estado dos objetos Kubernetes
+      # (pods, deployments, readiness, imagens em execucao, etc.).
+      - job_name: kube-state-metrics
+        static_configs:
+          - targets: ['kube-state-metrics:8080']
 ---
 apiVersion: v1
 kind: ConfigMap

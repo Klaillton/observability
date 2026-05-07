@@ -21,6 +21,21 @@ scrape_configs:
     static_configs:
       - targets: ['otel-collector:8889']
 
+  # Coleta metricas internas do proprio OTel Collector.
+  - job_name: 'otel-collector-internal'
+    static_configs:
+      - targets: ['otel-collector:8888']
+
+  # Coleta metricas do host (CPU, memoria, disco, rede).
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Coleta estado de recursos Kubernetes (pods, deployments, imagens, readiness).
+  - job_name: 'kube-state-metrics'
+    static_configs:
+      - targets: ['kube-state-metrics:8080']
+
   # Exemplo de alvo de aplicacao Spring Boot.
   # Mantido para referencia de instrumentacao de aplicacao real.
   # Em Kubernetes, esse alvo foi removido no pacote k8s para evitar erro
