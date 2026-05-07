@@ -566,14 +566,14 @@
       "id": 9,
       "type": "logs",
       "title": "Recent Logs",
-      "description": "Fluxo de logs recentes no Loki. Filtro amplo para evitar painel vazio quando o label job nao estiver presente.",
+      "description": "Fluxo de logs recentes do cluster coletados pelo Promtail no Loki. Usa o label job real do pipeline de arquivos Kubernetes.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
       },
       "targets": [
         {
-          "expr": "{service_name=~\".+\"}",
+          "expr": "{job=\"kubernetes-pod-files\"}",
           "queryType": "range",
           "refId": "A"
         }

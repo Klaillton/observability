@@ -24,6 +24,8 @@ resources:
   - restore.yaml
   # Agente de metricas do host: coleta CPU, memoria, disco e rede via /proc e /sys.
   - node-exporter.yaml
+  # Coleta de logs de containers Kubernetes para o Loki.
+  - promtail.yaml
   # Exporta estado de recursos Kubernetes para monitoramento (pods, deploys, imagens, readiness).
   - kube-state-metrics.yaml
 generatorOptions:

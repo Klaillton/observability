@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Correlacao entre traces distribuidos e logs. O painel de traces foi restringido por service.name para resposta mais rapida. O painel de logs usa label service_name (OTLP). Se estiver vazio, verifique a ingestao de logs no OTel Collector (otelcol_receiver_accepted_log_records_total).",
+  "description": "Correlacao entre traces distribuidos e logs. O painel de traces foi restringido por service.name para resposta mais rapida. O painel de logs usa streams do Promtail filtradas pelo caminho de arquivo do namespace brewer.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -62,7 +62,7 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Logs recentes do Loki do servico brewer para correlacionar com traces. Requer logs OTLP chegando ao Loki com label service_name.",
+      "description": "Logs recentes da aplicacao brewer no Loki, filtrados pelo caminho do arquivo do pod no namespace brewer.",
       "gridPos": {
         "h": 10,
         "w": 12,
@@ -83,12 +83,12 @@
       "pluginVersion": "13.0.1",
       "targets": [
         {
-          "expr": "{service_name=\"brewer\"}",
+          "expr": "{job=\"kubernetes-pod-files\",filename=~\"/var/log/pods/brewer_.*\"}",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Logs do Servico (Loki)",
+      "title": "Logs da Aplicacao brewer",
       "type": "logs"
     },
     {
