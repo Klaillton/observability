@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Correlação entre traces distribuídos e logs. O painel esquerdo lista as requests mais recentes capturadas pelo Tempo (distributed tracing). O painel direito mostra logs do Loki com link clicável no campo TraceID — clicar no ID abre o trace correspondente no Tempo. Use para depurar erros: encontre o trace com erro, clique no TraceID e veja os logs exatos daquela execução.",
+  "description": "Correlacao entre traces distribuidos e logs. O painel de traces foi restringido por service.name para resposta mais rapida. O painel de logs usa label service_name (OTLP). Se estiver vazio, verifique a ingestao de logs no OTel Collector (otelcol_receiver_accepted_log_records_total).",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -27,7 +27,7 @@
         "type": "tempo",
         "uid": "tempo"
       },
-      "description": "Lista traces recentes do Tempo para investigar latencia e erros por requisicao. Se estiver vazio, verifique se as aplicacoes estao enviando traces ao OTel Collector.",
+      "description": "Lista traces recentes do servico brewer para investigacao de latencia e erros. Filtro por service.name reduz tempo de resposta em relacao a busca global.",
       "gridPos": {
         "h": 10,
         "w": 12,
@@ -48,8 +48,8 @@
       "pluginVersion": "13.0.1",
       "targets": [
         {
-          "limit": 20,
-          "query": "{ }",
+          "limit": 10,
+          "query": "{resource.service.name=\"brewer\"}",
           "queryType": "search",
           "refId": "A"
         }
@@ -62,7 +62,7 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Logs recentes do Loki para correlacionar com traces. Procure campos como trace_id/span_id para abrir o trace correspondente no Tempo.",
+      "description": "Logs recentes do Loki do servico brewer para correlacionar com traces. Requer logs OTLP chegando ao Loki com label service_name.",
       "gridPos": {
         "h": 10,
         "w": 12,
@@ -83,13 +83,72 @@
       "pluginVersion": "13.0.1",
       "targets": [
         {
-          "expr": "{job=~\".+\"}",
+          "expr": "{service_name=\"brewer\"}",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Logs with TraceID Link (Loki)",
+      "title": "Logs do Servico (Loki)",
       "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "description": "Quantidade de logs recebidos pelo OTel Collector nos ultimos 30 minutos. Se estiver em 0, o painel de logs ficara vazio.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "13.0.1",
+      "targets": [
+        {
+          "expr": "sum(increase(otelcol_receiver_accepted_log_records_total[30m]))",
+          "refId": "A"
+        }
+      ],
+      "title": "Logs Ingeridos (ultimos 30m)",
+      "type": "stat"
     }
   ],
   "refresh": "30s",
@@ -111,6 +170,6 @@
   "timezone": "",
   "title": "Traces and Logs Correlation",
   "uid": "traces-logs-correlation",
-  "version": 1,
+  "version": 3,
   "weekStart": ""
 }

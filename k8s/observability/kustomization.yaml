@@ -36,6 +36,8 @@ configMapGenerator:
       - dashboards/brewer-app.json
       - dashboards/observability-overview.json
       - dashboards/traces-logs-correlation.json
+      # Dashboard de runtime (equivalente a docker/k8s ps).
+      - dashboards/runtime-inventory.json
       # Dashboard de recursos do servidor (requer node-exporter rodando).
       - dashboards/server-resources.json
       # Dashboard de saude interna do OTel Collector.

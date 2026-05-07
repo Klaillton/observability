@@ -573,7 +573,7 @@
       },
       "targets": [
         {
-          "expr": "{}",
+          "expr": "{service_name=~\".+\"}",
           "queryType": "range",
           "refId": "A"
         }

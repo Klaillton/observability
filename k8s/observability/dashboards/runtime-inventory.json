@@ -1,0 +1,322 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Visao de runtime equivalente ao docker ps/kubectl get pods. Mostra pods por fase, status de readiness, restarts de containers e imagens em execucao por pod/container.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Pods por Fase",
+      "description": "Fase atual dos pods nos namespaces observability e brewer.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "targets": [
+        {
+          "expr": "sum by (namespace, pod, phase) (kube_pod_status_phase{namespace=~\"observability|brewer\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "renameByName": {
+              "Value": "value",
+              "namespace": "namespace",
+              "pod": "pod",
+              "phase": "phase"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "fieldName": "value",
+                "config": {
+                  "id": "greater",
+                  "options": {
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "match": "all",
+            "type": "include"
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "pluginVersion": "13.0.1"
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Containers Ready (UP/DOWN)",
+      "description": "Status de readiness por container. Equivalente visual ao STATUS do kubectl get pods.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "targets": [
+        {
+          "expr": "kube_pod_container_status_ready{namespace=~\"observability|brewer\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "renameByName": {
+              "Value": "ready",
+              "namespace": "namespace",
+              "pod": "pod",
+              "container": "container"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "pluginVersion": "13.0.1"
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Restarts por Container",
+      "description": "Contador de restarts por pod/container para detectar instabilidade.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "targets": [
+        {
+          "expr": "kube_pod_container_status_restarts_total{namespace=~\"observability|brewer\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "renameByName": {
+              "Value": "restarts",
+              "namespace": "namespace",
+              "pod": "pod",
+              "container": "container"
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 8,
+        "x": 0,
+        "y": 10
+      },
+      "pluginVersion": "13.0.1"
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Imagens em Execucao (Runtime)",
+      "description": "Imagem real de cada container em execucao nos namespaces observability e brewer.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "targets": [
+        {
+          "expr": "kube_pod_container_info{namespace=~\"observability|brewer\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true
+            },
+            "renameByName": {
+              "namespace": "namespace",
+              "pod": "pod",
+              "container": "container",
+              "image": "image"
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 16,
+        "x": 8,
+        "y": 10
+      },
+      "pluginVersion": "13.0.1"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "style": "dark",
+  "tags": [
+    "observability",
+    "runtime",
+    "kubernetes"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Runtime Inventory (K8s ps)",
+  "uid": "runtime-inventory",
+  "version": 1,
+  "weekStart": ""
+}
