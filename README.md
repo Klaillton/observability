@@ -135,6 +135,13 @@ Checklist de go-live por aplicacao:
 
 ---
 
+## 👥 Contributors
+
+- [@dependabot[bot]](https://github.com/apps/dependabot)
+- [@github-copilot[bot]](https://github.com/apps/github-copilot)
+
+---
+
 ## 📬 Contato
 
 Dúvidas ou sugestões, abra uma [issue](https://github.com/Klaillton/observability/issues) no repositório.
