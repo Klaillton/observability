@@ -24,6 +24,10 @@ resources:
   - restore.yaml
   # Agente de metricas do host: coleta CPU, memoria, disco e rede via /proc e /sys.
   - node-exporter.yaml
+  # Coleta de logs de containers Kubernetes para o Loki.
+  - promtail.yaml
+  # Exporta estado de recursos Kubernetes para monitoramento (pods, deploys, imagens, readiness).
+  - kube-state-metrics.yaml
 generatorOptions:
   # Mantem nome estavel para evitar quebrar mounts referenciados pelo Deployment.
   disableNameSuffixHash: true
@@ -34,6 +38,10 @@ configMapGenerator:
       - dashboards/brewer-app.json
       - dashboards/observability-overview.json
       - dashboards/traces-logs-correlation.json
+      # Dashboard de logs e erros operacionais da aplicacao e da stack.
+      - dashboards/logs-errors-overview.json
+      # Dashboard de runtime (equivalente a docker/k8s ps).
+      - dashboards/runtime-inventory.json
       # Dashboard de recursos do servidor (requer node-exporter rodando).
       - dashboards/server-resources.json
       # Dashboard de saude interna do OTel Collector.

@@ -79,18 +79,23 @@
     {
       "id": 3,
       "type": "timeseries",
-      "title": "HTTP: Taxa de Erros (4xx e 5xx)",
-      "description": "Percentual de requisições HTTP com status de erro. 4xx = erro do cliente (ex: 404, 401, 400). 5xx = erro do servidor (ex: 500, 503). Compatível com labels OTel e com o label status das séries Spring Boot/Micrometer exportadas pela brewer.",
+      "title": "HTTP: Taxa de Erros e Redirecionamentos",
+      "description": "Percentual de requisições HTTP por classe de status. 3xx = redirecionamentos (ex: 302 login redirect, 301 moved permanently). 4xx = erro do cliente (ex: 404, 401, 400). 5xx = erro do servidor (ex: 500, 503). Compatível com labels OTel (http_response_status_code) e com o label status das séries Spring Boot/Micrometer exportadas pela brewer.",
       "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
       "targets": [
         {
-          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"4..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100) or (sum(rate(http_server_requests_milliseconds_count{status=~\"4..\"}[5m])) / sum(rate(http_server_requests_milliseconds_count[5m])) * 100)",
+          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"3..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100) or (sum(rate(http_server_requests_milliseconds_count{status=~\"3..\"}[5m])) / sum(rate(http_server_requests_milliseconds_count[5m])) * 100)",
           "refId": "A",
+          "legendFormat": "Redirecionamentos 3xx %"
+        },
+        {
+          "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"4..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100) or (sum(rate(http_server_requests_milliseconds_count{status=~\"4..\"}[5m])) / sum(rate(http_server_requests_milliseconds_count[5m])) * 100)",
+          "refId": "B",
           "legendFormat": "Erros 4xx %"
         },
         {
           "expr": "(sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m])) * 100) or (sum(rate(http_server_requests_milliseconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_milliseconds_count[5m])) * 100)",
-          "refId": "B",
+          "refId": "C",
           "legendFormat": "Erros 5xx %"
         }
       ],
@@ -255,6 +260,6 @@
   "timezone": "",
   "title": "Application Metrics",
   "uid": "application-metrics",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
