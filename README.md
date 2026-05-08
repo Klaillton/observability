@@ -138,7 +138,7 @@ Checklist de go-live por aplicacao:
 ## 👥 Contribuidores
 
 - [@dependabot[bot]](https://github.com/apps/dependabot)
-- [@github-copilot[bot]](https://github.com/apps/copilot-for-business)
+- [@github-copilot[bot]](https://github.com/apps/copilot)
 
 ---
 
