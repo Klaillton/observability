@@ -135,10 +135,10 @@ Checklist de go-live por aplicacao:
 
 ---
 
-## 👥 Contribuidores
+## 👥 Contributors
 
 - [@dependabot[bot]](https://github.com/apps/dependabot)
-- [@github-copilot[bot]](https://github.com/apps/copilot)
+- [@github-copilot[bot]](https://github.com/apps/github-copilot)
 
 ---
 
