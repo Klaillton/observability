@@ -14,10 +14,23 @@ metadata:
   name: grafana
   namespace: observability
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - grafana.local
   rules:
+    # Fallback para acesso por IP sem Host header dedicado.
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
     # Exposicao da UI do Grafana.
     - host: grafana.local
       http:
