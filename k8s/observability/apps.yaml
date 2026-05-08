@@ -307,6 +307,8 @@ spec:
           # Grafana: camada de visualizacao e correlacao de sinais.
           image: grafana/grafana:13.0.1
           env:
+            - name: TZ
+              value: "Europe/Lisbon"
             - name: GF_SECURITY_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:

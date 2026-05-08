@@ -111,6 +111,7 @@ services:
       - grafana-storage:/var/lib/grafana                        # Dashboards, datasources config persistence
       - ./config/grafana/provisioning:/etc/grafana/provisioning:ro  # Auto-provision datasources and dashboards
     environment:
+      - TZ=Europe/Lisbon  # Set timezone to Lisbon
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-ChangeMeNow!}  # Default admin password
       - GF_USERS_ALLOW_SIGN_UP=false  # Disable self-registration for security
     depends_on:
