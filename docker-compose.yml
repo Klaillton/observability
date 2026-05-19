@@ -92,6 +92,29 @@ services:
     restart: unless-stopped
 
   # ============================================================================
+  # NGINX - Reverse Proxy com TLS (HTTPS)
+  # ============================================================================
+  # Type: Reverse Proxy / TLS Terminator
+  # Purpose: Expoe os servicos com HTTPS usando certificado self-signed
+  # Key Features:
+  #   - Redireciona HTTP (80) para HTTPS (443)
+  #   - Proxy para Grafana em / e Prometheus em /prometheus/
+  #   - Certificado self-signed em config/nginx/certs/
+  nginx:
+    image: nginx:1.27.5-alpine
+    container_name: nginx
+    ports:
+      - "80:80"    # Redireciona para HTTPS
+      - "443:443"  # HTTPS - Grafana (/) e Prometheus (/prometheus/)
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - grafana
+      - prometheus
+    restart: unless-stopped
+
+  # ============================================================================
   # GRAFANA - Visualization & Dashboards (UI Layer)
   # ============================================================================
   # Type: Data Visualization Platform (Web UI for observability)
@@ -114,6 +137,8 @@ services:
       - TZ=Europe/Lisbon  # Set timezone to Lisbon
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-ChangeMeNow!}  # Default admin password
       - GF_USERS_ALLOW_SIGN_UP=false  # Disable self-registration for security
+      - GF_SERVER_ROOT_URL=https://localhost  # Necessario para links corretos atras do proxy HTTPS
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
     depends_on:
       - prometheus  # Requires Prometheus as data source
       - tempo       # Requires Tempo as trace data source
