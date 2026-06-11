@@ -1,0 +1,15 @@
+# AI Agent / Copilot context optimization
+# Exclude human-only docs, task aids, analysis reports, large lockfiles and noisy artifacts
+# These reduce token usage when using agents heavily
+
+docs/archive/
+docs/*decommissioning*
+docs/*audit*
+docs/*remediation*
+docs/*plan*.md
+docs/*report*.md
+*Grok*.md
+*-help.md
+
+frontend/package-lock.json
+legacy/
