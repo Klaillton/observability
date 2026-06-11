@@ -3,3 +3,15 @@ grafana-storage/
 tempo-data/
 k8s/observability/secrets/*.env
 !k8s/observability/secrets/*.example.env
+
+# ============================================================
+# AI / Agent Context Optimization (added for heavy agent usage)
+# ============================================================
+docs/archive/
+docs/*decommissioning*
+docs/*audit*
+docs/*remediation*
+docs/*plan*.md
+docs/*report*.md
+*Grok*.md
+*-help.md
