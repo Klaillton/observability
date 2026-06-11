@@ -1,0 +1,13 @@
+# AI Agent context optimization (Claude Code / similar)
+# Exclude human docs, task aids and noisy artifacts
+
+docs/archive/
+docs/*decommissioning*
+docs/*audit*
+docs/*remediation*
+docs/*plan*.md
+docs/*report*.md
+*Grok*.md
+
+frontend/package-lock.json
+legacy/
