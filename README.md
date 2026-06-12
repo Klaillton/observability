@@ -45,9 +45,9 @@ observability/
 
 1. A aplicacao instrumentada envia telemetria (traces, metrics, logs) para o OpenTelemetry Collector.
 2. O Collector roteia cada tipo de sinal para o backend certo:
-	- traces -> Tempo
-	- metrics -> endpoint Prometheus do proprio Collector
-	- logs -> Loki
+   - traces -> Tempo
+   - metrics -> endpoint Prometheus do proprio Collector
+   - logs -> Loki
 3. O Prometheus coleta metrics periodicamente por scrape.
 4. O Grafana consulta Prometheus, Loki e Tempo para dashboards e correlacao entre sinais.
 
@@ -55,7 +55,7 @@ Em termos de desenho de arquitetura, pense em tres camadas:
 
 - Coleta e roteamento: OpenTelemetry Collector
 - Armazenamento especializado: Prometheus (metrics), Loki (logs), Tempo (traces)
-- Visualizacao e exploracao: Grafana
+- Visualizacao e exploração: Grafana
 
 ### Pré-requisitos
 
@@ -96,6 +96,17 @@ Fluxo recomendado para validar a stack ponta a ponta:
 
 Esse ciclo ajuda a entender observabilidade de forma integrada, e nao como ferramentas isoladas.
 
+### Validacao com `devstack-infra`
+
+Quando o deploy for disparado pelo fluxo novo em `devstack-infra`, valide a stack em duas camadas:
+
+1. Camada de plataforma: confirme que `otel-collector`, `prometheus`, `loki`, `tempo` e `grafana` continuam saudaveis.
+2. Camada de workload: suba a aplicacao ou servico que usa os recursos do `devstack-infra` e confirme se a instrumentacao OTel envia traces, metrics e logs.
+3. Camada de cobertura: para os servicos base do `devstack-infra` (`postgres`, `mongodb`, `redis`, `elasticsearch` e `keycloak`), espere visibilidade de saude e uso de infraestrutura; telemetria rica de negocio so aparece se o servico ou a aplicacao consumidora estiver instrumentada.
+4. Camada de exploração: use os dashboards `OTel Collector Health`, `Application Metrics` e `Traces and Logs Correlation` para confirmar que o deploy novo nao quebrou o fluxo de telemetria.
+
+Se o deploy do `devstack-infra` nao gerar sinal OTel por conta propria, isso nao indica falha da stack de observabilidade; apenas que ainda falta instrumentacao no workload que foi implantado.
+
 ### Onboarding de novas aplicacoes no Kubernetes
 
 Para integrar novas aplicacoes na stack existente (OTel, Prometheus, Loki,
@@ -117,12 +128,12 @@ Checklist de go-live por aplicacao:
 
 ## 🌿 Branches
 
-| Branch | Descrição |
-|--------|-----------|
-| `main` | Branch principal — configurações estáveis |
-| `develop` | Branch de desenvolvimento |
-| `feature/*` | Branches de novas funcionalidades |
-| `hotfix/*` | Branches de correções urgentes |
+| Branch      | Descrição                                 |
+| ----------- | ----------------------------------------- |
+| `main`      | Branch principal — configurações estáveis |
+| `develop`   | Branch de desenvolvimento                 |
+| `feature/*` | Branches de novas funcionalidades         |
+| `hotfix/*`  | Branches de correções urgentes            |
 
 ---
 

@@ -97,44 +97,43 @@ Template pronto para copiar e adaptar:
 ### 1) Instrumentar a aplicacao com OpenTelemetry
 
 - Habilite envio OTLP para o Collector:
-	- endpoint gRPC: `otel-collector.observability.svc.cluster.local:4317`
-	- endpoint HTTP: `http://otel-collector.observability.svc.cluster.local:4318`
+  - endpoint gRPC: `otel-collector.observability.svc.cluster.local:4317`
+  - endpoint HTTP: `http://otel-collector.observability.svc.cluster.local:4318`
 - Defina identificacao minima do servico:
-	- `service.name` (obrigatorio)
-	- `service.namespace` (recomendado)
-	- `service.version` (recomendado)
+  - `service.name` (obrigatorio)
+  - `service.namespace` (recomendado)
+  - `service.version` (recomendado)
 
 Exemplo de variaveis comuns (ajuste para a linguagem/framework):
 
 ```yaml
 env:
-	- name: OTEL_SERVICE_NAME
-		value: minha-app
-	- name: OTEL_EXPORTER_OTLP_ENDPOINT
-		value: http://otel-collector.observability.svc.cluster.local:4318
-	- name: OTEL_EXPORTER_OTLP_PROTOCOL
-		value: http/protobuf
-	- name: OTEL_RESOURCE_ATTRIBUTES
-		value: service.namespace=apps,service.version=1.0.0,deployment.environment=dev
+- name: OTEL_SERVICE_NAME
+value: minha-app
+- name: OTEL_EXPORTER_OTLP_ENDPOINT
+value: http://otel-collector.observability.svc.cluster.local:4318
+- name: OTEL_EXPORTER_OTLP_PROTOCOL
+value: http/protobuf
+- name: OTEL_RESOURCE_ATTRIBUTES
+value: service.namespace=apps,service.version=1.0.0,deployment.environment=dev
 ```
 
 ### 2) Garantir logs com correlacao de trace
 
 - Inclua `trace_id` e `span_id` no log da aplicacao (via MDC/contexto do SDK).
 - Isso permite correlacionar logs (Loki) com traces (Tempo) no dashboard de
-	correlacao.
+  correlacao.
 
 ### 3) Expor metricas padrao da app
 
 - Priorize metricas HTTP, DB e filas com labels semanticas OTel.
-- O dashboard `Application Metrics` ja foi montado para esse conjunto comum e
-	deve comecar a mostrar dados sem criar dashboard novo por app.
+- O dashboard `Application Metrics` ja foi montado para esse conjunto comum e deve comecar a mostrar dados sem criar dashboard novo por app.
 
 ### 4) Checklist rapido de validacao
 
 ```bash
 kubectl -n observability exec deploy/prometheus -- \
-	wget -qO- 'http://localhost:9090/api/v1/targets'
+wget -qO- 'http://localhost:9090/api/v1/targets'
 
 kubectl -n observability logs deploy/otel-collector --tail=100
 ```
@@ -150,6 +149,16 @@ No Grafana, valide nesta ordem:
 Crie dashboard dedicado somente quando houver requisito especifico de negocio
 (SLOs, KPIs, funis, eventos de dominio). Para operacao tecnica inicial, os
 dashboards atuais ja cobrem o necessario.
+
+### Validacao com `devstack-infra`
+
+Se o deploy vier do fluxo novo em `devstack-infra`, use este checklist curto:
+
+1. Verifique se a stack base segue disponivel: `otel-collector`, `prometheus`, `loki`, `tempo` e `grafana`.
+2. Confirme se a aplicacao que depende do `devstack-infra` esta enviando telemetria para o Collector.
+3. Para os servicos base do `devstack-infra` (`postgres`, `mongodb`, `redis`, `elasticsearch` e `keycloak`), trate a observabilidade padrao como cobertura de infraestrutura; sem instrumentacao adicional, nao espere traces ou logs de negocio completos.
+4. Valide no Grafana, nesta ordem: `OTel Collector Health`, `Application Metrics` e `Traces and Logs Correlation`.
+5. Se os dashboards ficarem vazios, primeiro confirme o deploy da aplicacao consumidora e o endpoint OTLP antes de concluir que a stack quebrou.
 
 ## Checklist de go-live de observabilidade (por aplicacao)
 

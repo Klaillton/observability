@@ -38,15 +38,17 @@ exporters:
   # Exporta traces para Tempo usando OTLP/gRPC.
   # tls.insecure=true e aceitavel em ambiente local/lab.
   # Em producao, prefira TLS valido e autenticacao.
-  otlp_grpc/tempo:
-    endpoint: "tempo:4317"
+  otlp/tempo:
+    endpoint: tempo.observability.svc.cluster.local:4317   # gRPC OTLP do Tempo
     tls:
       insecure: true
 
   # Exporta logs para Loki via endpoint OTLP HTTP.
   # Loki converte OTLP logs para modelo interno de labels + linhas.
-  otlp_http/loki:
-    endpoint: "http://loki:3100/otlp"
+  otlp/loki:
+   endpoint: loki.observability.svc.cluster.local:4317    # ou :4318 se o receiver do Loki estiver em HTTP OTLP
+   tls:
+     insecure: true
 
   # Exporter de debug apoia troubleshooting do pipeline.
   # Pode gerar muito volume de logs, usar com cuidado.
@@ -63,7 +65,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp_grpc/tempo]
+      exporters: [otlp/tempo]
     metrics:
       receivers: [otlp]
       processors: [batch]
@@ -71,4 +73,4 @@ service:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp_http/loki]
+      exporters: [otlp/loki]
